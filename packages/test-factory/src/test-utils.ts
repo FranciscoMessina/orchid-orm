@@ -1,5 +1,10 @@
 import { createBaseTable, orchidORM } from 'orchid-orm';
 import { Adapter } from 'pqb';
+import {
+  patchPgForTransactions,
+  rollbackTransaction,
+  startTransaction,
+} from 'pg-transactional-tests';
 
 type AssertEqual<T, Expected> = [T] extends [Expected]
   ? [Expected] extends [T]
@@ -73,7 +78,7 @@ export class ProfileTable extends BaseTable {
 }
 
 export const adapter = new Adapter({
-  databaseURL: process.env.DATABASE_URL,
+  databaseURL: process.env.PG_URL,
 });
 
 export const db = orchidORM(
@@ -86,3 +91,12 @@ export const db = orchidORM(
     profile: ProfileTable,
   },
 );
+
+export const useTestDatabase = () => {
+  beforeAll(patchPgForTransactions);
+  beforeEach(startTransaction);
+  afterEach(rollbackTransaction);
+  afterAll(async () => {
+    await adapter.close();
+  });
+};

@@ -1,12 +1,12 @@
 import { AggregateItemOptions, HavingItem } from './types';
 import { getRaw, isRaw, RawExpression } from '../raw';
-import { Operator } from '../columns/operators';
 import { aggregateToSql } from './aggregate';
 import { QueryBase } from '../query';
 import { addValue, q } from './common';
 import { ToSqlCtx } from './toSql';
 import { SelectQueryData } from './data';
 import { EMPTY_OBJECT } from '../utils';
+import { Operator } from '../../../common/src/columns/operators';
 
 const aggregateOptionNames: (keyof AggregateItemOptions)[] = [
   'distinct',
@@ -44,7 +44,7 @@ export const havingToSql = (
   or.forEach((and) => {
     const ands: string[] = [];
     and.forEach((item) => {
-      if ('prototype' in item || '__table' in item) {
+      if ('prototype' in item || 'baseQuery' in item) {
         const query = item as QueryBase;
         const sql = havingToSql(
           ctx,

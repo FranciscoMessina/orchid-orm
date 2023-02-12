@@ -1,6 +1,6 @@
 {
   "name": "orchid-orm",
-  "version": "1.5.29",
+  "version": "1.5.30",
   "description": "Postgres ORM",
   "homepage": "https://orchid-orm.netlify.app/guide/orm-setup-and-overview.html",
   "repository": {
@@ -18,24 +18,23 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "jest --watch --verbose false",
     "check": "jest",
+    "types": "tsc",
     "test:ci": "jest --coverage --coverageReporters json-summary",
     "build": "rimraf ./dist/ && rollup -c --rollup.config",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "db": "ts-node src/db/dbScripts.ts"
   },
   "jest": {
-    "setupFiles": [
-      "dotenv/config"
-    ],
-    "setupFilesAfterEnv": [
-      "../../jest-setup.ts",
-      "./jest-setup.ts"
-    ],
-    "transform": {
-      "^.+\\.ts$": "@swc/jest"
-    }
+    "rootDir": "src",
+    "setupFiles": ["dotenv/config"],
+    "setupFilesAfterEnv": ["../../../jest-setup.ts"],
+    "transform": { "^.+\\.ts$": "@swc/jest" }
   },
   "keywords": [
     "pg",
@@ -51,24 +50,9 @@
     "prompts": "^2.4.2"
   },
   "devDependencies": {
-    "@swc/core": "^1.3.19",
-    "@swc/jest": "^0.2.21",
-    "@types/jest": "^28.1.2",
-    "@types/node": "^18.0.1",
-    "@types/pg": "^8.6.5",
     "@types/prompts": "^2.4.2",
-    "dotenv": "^16.0.1",
-    "jest": "^28.1.2",
     "orchid-orm-schema-to-zod": "workspace:*",
-    "pg": "^8.7.3",
-    "pg-transactional-tests": "^1.0.7",
-    "rake-db": "workspace:*",
-    "rimraf": "^3.0.2",
-    "rollup": "^2.79.0",
-    "rollup-plugin-dts": "^4.2.2",
-    "rollup-plugin-esbuild": "^4.10.1",
-    "tslib": "^2.4.0",
-    "typescript": "^4.7.4"
+    "rake-db": "workspace:*"
   },
   "peerDependencies": {
     "typescript": "*"
