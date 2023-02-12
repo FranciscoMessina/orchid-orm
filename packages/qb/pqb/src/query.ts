@@ -13,7 +13,7 @@ import {
   ColumnsShape,
   ColumnType,
   ColumnTypesBase,
-} from './columnSchema';
+} from './columns';
 import { AliasOrTable, EmptyObject, Spread, StringKey } from './utils';
 import { RawExpression } from './raw';
 import { Db } from './db';
@@ -106,6 +106,14 @@ export const queryTypeWithLimitOne = {
 
 export const isQueryReturnsAll = (q: Query) =>
   !q.query.returnType || q.query.returnType === 'all';
+
+const queryTypeReturningMultipleRows = {
+  all: true,
+  rows: true,
+  pluck: true,
+} as Record<QueryReturnType, true | undefined>;
+export const isQueryReturnsMultipleRows = (q: Query) =>
+  queryTypeReturningMultipleRows[q.query.returnType];
 
 export type JoinedTablesBase = Record<
   string,

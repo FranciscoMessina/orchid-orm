@@ -3,14 +3,16 @@ import {
   AdapterOptions,
   DbResult,
   DefaultColumnTypes,
+  EnumColumn,
   NoPrimaryKeyOption,
   QueryLogOptions,
   singleQuote,
 } from 'pqb';
-import Enquirer from 'enquirer';
 import path from 'path';
 import { readdir } from 'fs/promises';
 import { RakeDbAst } from './ast';
+import prompts from 'prompts';
+import { TableQuery } from './migration/createTable';
 
 type Db = DbResult<DefaultColumnTypes>;
 
@@ -152,40 +154,44 @@ export const setAdapterOptions = (
   }
 };
 
-const askAdminCredentials = async (): Promise<{
-  user: string;
-  password: string;
-}> => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const prompt = new (Enquirer as any).Snippet({
-    message: `What are postgres admin login and password?`,
-    fields: [
-      {
-        name: 'user',
-        required: true,
-      },
-      {
-        name: 'password',
-      },
-    ],
-    values: {
-      user: 'postgres',
-      password: '',
-    },
-    template: 'Admin user: {{user}}\nAdmin password: {{password}}',
-  });
-
-  const { values } = await prompt.run();
-  if (!values.password) values.password = '';
-
-  return values;
-};
-
 export const setAdminCredentialsToOptions = async (
   options: AdapterOptions,
-): Promise<AdapterOptions> => {
-  const values = await askAdminCredentials();
-  return setAdapterOptions(options, values);
+  create?: boolean,
+): Promise<AdapterOptions | undefined> => {
+  const confirm = await prompts([
+    {
+      message: `Would you like to share admin credentials to ${
+        create ? 'create' : 'drop'
+      } a database`,
+      type: 'confirm',
+      name: 'confirm',
+      initial: true,
+    },
+  ]);
+
+  if (!confirm.confirm) {
+    return;
+  }
+
+  const values = await prompts([
+    {
+      message: 'Enter admin user:',
+      type: 'text',
+      name: 'user',
+      initial: 'postgres',
+      min: 1,
+    },
+    {
+      message: 'Enter admin password:',
+      type: 'password',
+      name: 'password',
+    },
+  ]);
+
+  return setAdapterOptions(options, {
+    ...values,
+    password: values.password || undefined,
+  });
 };
 
 export const createSchemaMigrations = async (
@@ -330,4 +336,18 @@ export const quoteSchemaTable = ({
   name: string;
 }) => {
   return singleQuote(schema ? `${schema}.${name}` : name);
+};
+
+export const makePopulateEnumQuery = (item: EnumColumn): TableQuery => {
+  const [schema, name] = getSchemaAndTableFromName(item.enumName);
+  return {
+    text: `SELECT unnest(enum_range(NULL::${quoteWithSchema({
+      schema,
+      name,
+    })}))::text`,
+    then(result) {
+      // populate empty options array with values from db
+      item.options.push(...result.rows.map(([value]) => value));
+    },
+  };
 };

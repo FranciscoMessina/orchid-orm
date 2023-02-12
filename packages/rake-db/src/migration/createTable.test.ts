@@ -1,4 +1,11 @@
-import { expectSql, getDb, queryMock, resetDb, toLine } from '../test-utils';
+import {
+  asMock,
+  expectSql,
+  getDb,
+  queryMock,
+  resetDb,
+  toLine,
+} from '../test-utils';
 
 const db = getDb();
 
@@ -57,6 +64,7 @@ const db = getDb();
           id: t.serial().primaryKey(),
           nullable: t.text().nullable(),
           nonNullable: t.text(),
+          enum: t.enum('mood'),
           withDefault: t.boolean().default(false),
           withDefaultRaw: t.date().default(t.raw(`now()`)),
           withIndex: t.text().index({
@@ -89,11 +97,13 @@ const db = getDb();
 
       const expectCreateTable = () => {
         expectSql([
+          'SELECT unnest(enum_range(NULL::"mood"))::text',
           `
             CREATE TABLE "table" (
               "id" serial PRIMARY KEY,
               "nullable" text,
               "nonNullable" text NOT NULL,
+              "enum" "mood" NOT NULL,
               "withDefault" boolean NOT NULL DEFAULT false,
               "withDefaultRaw" date NOT NULL DEFAULT now(),
               "withIndex" text NOT NULL,
@@ -128,18 +138,32 @@ const db = getDb();
       };
 
       const expectDropTable = () => {
-        expectSql(`
-          DROP TABLE "table" CASCADE
-        `);
+        expectSql([
+          'SELECT unnest(enum_range(NULL::"mood"))::text',
+          `
+            DROP TABLE "table" CASCADE
+          `,
+        ]);
       };
+
+      const enumRows = [['one'], ['two']];
+      asMock(db.adapter.arrays).mockResolvedValueOnce({ rows: enumRows });
 
       await fn();
       (action === 'createTable' ? expectCreateTable : expectDropTable)();
 
+      const [{ ast: ast1 }] = asMock(db.options.appCodeUpdater).mock.calls[0];
+      expect(ast1.shape.enum.options).toEqual(['one', 'two']);
+
       db.up = false;
       queryMock.mockClear();
+      asMock(db.options.appCodeUpdater).mockClear();
+      asMock(db.adapter.arrays).mockResolvedValueOnce({ rows: enumRows });
       await fn();
       (action === 'createTable' ? expectDropTable : expectCreateTable)();
+
+      const [{ ast: ast2 }] = asMock(db.options.appCodeUpdater).mock.calls[0];
+      expect(ast2.shape.enum.options).toEqual(['one', 'two']);
     });
 
     it('should support composite primary key defined on multiple columns', async () => {
@@ -319,7 +343,7 @@ const db = getDb();
 
       it('should throw by default when no primary key', async () => {
         await expect(() => db[action]('table', () => ({}))).rejects.toThrow(
-          'Table table has no primary key',
+          'Table table has no primary key.\nYou can suppress this error by setting { noPrimaryKey: true } after a table name.',
         );
       });
 
@@ -327,7 +351,7 @@ const db = getDb();
         db.options.noPrimaryKey = 'error';
 
         await expect(() => db[action]('table', () => ({}))).rejects.toThrow(
-          'Table table has no primary key',
+          'Table table has no primary key.\nYou can suppress this error by setting { noPrimaryKey: true } after a table name.',
         );
       });
 
@@ -337,7 +361,9 @@ const db = getDb();
 
         db[action]('table', () => ({}));
 
-        expect(console.warn).toBeCalledWith('Table table has no primary key');
+        expect(console.warn).toBeCalledWith(
+          'Table table has no primary key.\nYou can suppress this error by setting { noPrimaryKey: true } after a table name.',
+        );
       });
 
       it('should not throw when no primary key and noPrimaryKey is set to `ignore`', async () => {

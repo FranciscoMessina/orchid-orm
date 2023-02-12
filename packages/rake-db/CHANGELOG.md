@@ -1,5 +1,46 @@
 # rake-db
 
+## 2.3.30
+
+### Patch Changes
+
+- Updated dependencies
+  - pqb@0.9.17
+
+## 2.3.29
+
+### Patch Changes
+
+- Updated dependencies
+  - pqb@0.9.16
+
+## 2.3.28
+
+### Patch Changes
+
+- Support enum in rake-db
+
+## 2.3.26
+
+### Patch Changes
+
+- Add createEnum and dropEnum to rake-db
+- Updated dependencies
+  - pqb@0.9.15
+
+## 2.3.25
+
+### Patch Changes
+
+- Updated dependencies
+  - pqb@0.9.14
+
+## 2.3.24
+
+### Patch Changes
+
+- Handle ssl required case in db create; Confirm db creation before asking for creds
+
 ## 2.3.23
 
 ### Patch Changes

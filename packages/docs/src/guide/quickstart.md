@@ -116,15 +116,21 @@ DATABASE_URL=postgres://user:password@localhost:5432/dbname?ssl=false
 DATABASE_TEST_URL=postgres://user:password@localhost:5432/dbname-test?ssl=false
 ```
 
-Create configured databases with this command:
+If you're using a hosted database, change `ssl` to true in the above config.
+
+In case of using hosted database, it's already created by provided.
+
+But if you develop with a local Postgres, create databases with this command:
 
 ```sh
+# command to create a database:
 npm run db create
 ```
 
 If you chose to create demo tables, there are migrations files in `src/db/migrations`. Run migrations:
 
 ```sh
+# command to run migrations (create tables):
 npm run db migrate
 ```
 

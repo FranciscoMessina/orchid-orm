@@ -1,5 +1,29 @@
 # pqb
 
+## 0.9.17
+
+### Patch Changes
+
+- Fix sub query columns parsing
+
+## 0.9.16
+
+### Patch Changes
+
+- Store error stack trace in error cause
+
+## 0.9.15
+
+### Patch Changes
+
+- Add createEnum and dropEnum to rake-db
+
+## 0.9.14
+
+### Patch Changes
+
+- Fix TS error when using nullable type in migration
+
 ## 0.9.13
 
 ### Patch Changes
